@@ -1,11 +1,20 @@
-# 内部工作笔记，不入库
-README.md
+# 内部工作笔记（不入库）
+*/README.md
 
-# 课程提供的模板与讲义
-模板/
-manual.md
+# 课程讲义与模板
+*/manual.md
+*/模板/
 
 # 报告与打包产物
 report.pdf
-实验1_*.zip
-实验1_学号_姓名/
+report.tex
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+实验[0-9]_*.zip
+
+# 本地工具与编辑器配置
+.tools/
+.claude/
