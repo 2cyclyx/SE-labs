@@ -9,10 +9,8 @@ skinparam participant {
   BorderColor #2F6BFF
   FontSize 12
 }
-skinparam sequence {
-  LifeLineBorderColor #CBD5E0
-  LifeLineBackgroundColor #F7F9FC
-}
+skinparam sequenceLifeLineBorderColor #334155
+skinparam sequenceLifeLineBackgroundColor #FFFFFF
 autonumber
 
 participant "参与者A" as A

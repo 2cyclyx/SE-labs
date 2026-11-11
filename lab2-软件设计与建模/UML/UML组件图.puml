@@ -3,8 +3,8 @@ skinparam defaultFontName "Microsoft YaHei"
 skinparam dpi 150
 skinparam componentStyle rectangle
 skinparam shadowing false
-skinparam nodesep 18
-skinparam ranksep 45
+skinparam nodesep 20
+skinparam ranksep 42
 skinparam ArrowColor #4A5568
 skinparam component {
   BackgroundColor #FFFFFF
@@ -16,17 +16,20 @@ skinparam package {
   BorderColor #CBD5E0
   FontSize 14
 }
+skinparam linetype polyline
 skinparam database {
   BackgroundColor #FFFFFF
   BorderColor #2F6BFF
 }
 
 package "表现层" #EEF4FF {
-  [参与者门户\n（活动浏览 / 报名 / 我的）] as Portal
-  [组织者工作台\n（活动与名单管理）] as OrgConsole
-  [检票客户端\n（扫码核销）] as VerifyConsole
-  [平台管理后台\n（审核 / 统计 / 日志）] as AdminConsole
+  [参与者门户\n活动浏览 / 报名 / 我的报名] as Portal
+  [组织者工作台\n活动、场次与名单管理] as OrgConsole
+  [检票客户端\n扫码核销] as VerifyConsole
+  [平台管理后台\n审核 / 统计 / 日志] as AdminConsole
 }
+
+[Web API 网关\n统一鉴权与路由] as Gateway
 
 package "应用服务层" #EEF4FF {
   [用户与权限服务] as AuthSvc
@@ -47,42 +50,39 @@ package "基础设施层" #FFFBEA {
   database "MySQL\n业务数据库" as DB
   [邮件网关] as Mail
   [定时任务调度] as Scheduler
-  [文件存储\n（导出文件）] as Storage
+  [文件存储] as Storage
 }
 
-' ---- 表现层到应用服务 ----
-Portal --> AuthSvc
-Portal --> RegSvc
-Portal --> StatsSvc
-OrgConsole --> ActivitySvc
-OrgConsole --> StatsSvc
-VerifyConsole --> CheckInSvc
-AdminConsole --> ActivitySvc
-AdminConsole --> AuthSvc
-AdminConsole --> AuditSvc
+' 表现层统一经网关进入应用服务
+Portal --> Gateway
+OrgConsole --> Gateway
+VerifyConsole --> Gateway
+AdminConsole --> Gateway
 
-' ---- 应用服务之间 ----
+Gateway --> AuthSvc
+Gateway --> ActivitySvc
+Gateway --> RegSvc
+Gateway --> CheckInSvc
+Gateway --> StatsSvc
+Gateway --> AuditSvc
+
+' 应用服务之间的核心协作
 RegSvc --> NotifySvc
 CheckInSvc --> RegSvc
-ActivitySvc --> NotifySvc
-RegSvc --> AuditSvc
-ActivitySvc --> AuditSvc
-CheckInSvc --> AuditSvc
-StatsSvc --> Storage
-
-' ---- 应用服务到领域层 ----
-AuthSvc --> Domain
-ActivitySvc --> Domain
 RegSvc --> Domain
-CheckInSvc --> Domain
-StatsSvc --> Domain
-Domain --> StateMachine
 
-' ---- 基础设施 ----
+note bottom of Domain
+  全部应用服务均通过领域模型访问业务数据；
+  审核、发布、取消、导出、核销等关键操作
+  统一写入日志审计服务
+end note
+
+' 基础设施
+Domain --> StateMachine
 Domain --> DB
 AuditSvc --> DB
 NotifySvc --> Mail
+StatsSvc --> Storage
 Scheduler --> RegSvc
-Scheduler --> ActivitySvc
 
 @enduml
