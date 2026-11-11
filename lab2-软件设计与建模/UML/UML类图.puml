@@ -1,0 +1,208 @@
+@startuml UML类图
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 150
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam nodesep 16
+skinparam ranksep 40
+skinparam ArrowColor #4A5568
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #2F6BFF
+  FontSize 12
+}
+skinparam package {
+  BackgroundColor #F7F9FC
+  BorderColor #CBD5E0
+  FontSize 14
+}
+skinparam linetype ortho
+
+package "领域模型" #F7F9FC {
+
+  class Organization {
+    - orgId: Long
+    - name: String
+    - qualification: String
+    - status: String
+  }
+
+  class Activity {
+    - activityId: Long
+    - orgId: Long
+    - title: String
+    - description: String
+    - cover: String
+    - status: ActivityStatus
+    - ownerId: Long
+    + submitAudit(): void
+    + approve(): void
+    + reject(reason: String): void
+    + cancel(): void
+    + needsReaudit(changed: String): boolean
+  }
+
+  class Session {
+    - sessionId: Long
+    - activityId: Long
+    - startTime: DateTime
+    - endTime: DateTime
+    - venue: String
+    - capacity: int
+    - regStartTime: DateTime
+    - regDeadline: DateTime
+    - status: SessionStatus
+    + remainingQuota(): int
+    + isRegisterable(now: DateTime): boolean
+    + refreshStatus(now: DateTime): void
+  }
+
+  class TicketType {
+    - ticketTypeId: Long
+    - sessionId: Long
+    - name: String
+    - price: Decimal
+    - quota: int
+    - requiredFields: String
+    - status: TicketStatus
+    + soldCount(): int
+    + remaining(): int
+  }
+
+  class User {
+    - userId: Long
+    - phone: String
+    - passwordHash: String
+    - name: String
+    - role: Role
+    - orgId: Long
+    - status: String
+    - failCount: int
+    - lockedUntil: DateTime
+    + checkPassword(raw: String): boolean
+    + lock(): void
+  }
+
+  class Registration {
+    - regId: Long
+    - userId: Long
+    - sessionId: Long
+    - ticketTypeId: Long
+    - status: RegistrationStatus
+    - createdAt: DateTime
+    - checkedInAt: DateTime
+    - checkedInBy: Long
+    - requestNo: String
+    + confirm(): void
+    + cancel(): void
+    + checkIn(operatorId: Long): void
+    + markAbsent(): void
+    + invalidate(): void
+  }
+
+  class WaitlistEntry {
+    - waitId: Long
+    - userId: Long
+    - sessionId: Long
+    - queueNo: int
+    - status: String
+    - notifiedAt: DateTime
+    - confirmDeadline: DateTime
+    + promote(): void
+    + expire(): void
+    + requeue(): void
+  }
+
+  class SessionVerifier {
+    - verifierId: Long
+    - userId: Long
+    - sessionId: Long
+    - inviteToken: String
+    - status: String
+    - expireAt: DateTime
+    + accept(password: String): void
+    + isValid(now: DateTime): boolean
+  }
+
+  class Notification {
+    - notifyId: Long
+    - userId: Long
+    - type: String
+    - targetId: Long
+    - channel: String
+    - status: String
+    - sentAt: DateTime
+    + markSent(): void
+    + markFailed(reason: String): void
+  }
+
+  class OperationLog {
+    - logId: Long
+    - operatorId: Long
+    - action: String
+    - targetType: String
+    - targetId: Long
+    - result: String
+    - createdAt: DateTime
+  }
+
+}
+
+package "状态枚举" #FFFBEA {
+
+  enum Role {
+    PARTICIPANT
+    ORGANIZER
+    VERIFIER
+    ADMIN
+  }
+
+  enum ActivityStatus {
+    DRAFT
+    PENDING
+    PUBLISHED
+    FINISHED
+    CANCELLED
+  }
+
+  enum SessionStatus {
+    NOT_STARTED
+    REGISTERING
+    REG_CLOSED
+    ONGOING
+    FINISHED
+    CANCELLED
+  }
+
+  enum RegistrationStatus {
+    CONFIRMED
+    WAITING
+    CHECKED_IN
+    CANCELLED
+    EXPIRED
+    ABSENT
+  }
+
+  enum TicketStatus {
+    NOT_ON_SALE
+    ON_SALE
+    SOLD_OUT
+    SUSPENDED
+  }
+}
+
+Organization "1" -- "0..*" Activity : 拥有 >
+Activity "1" *-- "1..*" Session : 包含 >
+Session "1" *-- "1..*" TicketType : 设置 >
+Session "1" -- "0..*" Registration : 产生 >
+Session "1" -- "0..*" WaitlistEntry : 排队 >
+Session "1" -- "0..*" SessionVerifier : 授权 >
+User "1" -- "0..*" Registration : 提交 >
+User "1" -- "0..*" WaitlistEntry : 加入 >
+User "1" -- "0..*" SessionVerifier : 担任 >
+User "1" -- "0..*" Notification : 接收 >
+TicketType "1" -- "0..*" Registration : 对应 >
+OperationLog ..> User : 记录操作人
+
+@enduml

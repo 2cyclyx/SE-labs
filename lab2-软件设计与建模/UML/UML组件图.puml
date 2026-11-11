@@ -1,0 +1,88 @@
+@startuml UML组件图
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 150
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam nodesep 18
+skinparam ranksep 45
+skinparam ArrowColor #4A5568
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #2F6BFF
+  FontSize 12
+}
+skinparam package {
+  BackgroundColor #F7F9FC
+  BorderColor #CBD5E0
+  FontSize 14
+}
+skinparam database {
+  BackgroundColor #FFFFFF
+  BorderColor #2F6BFF
+}
+
+package "表现层" #EEF4FF {
+  [参与者门户\n（活动浏览 / 报名 / 我的）] as Portal
+  [组织者工作台\n（活动与名单管理）] as OrgConsole
+  [检票客户端\n（扫码核销）] as VerifyConsole
+  [平台管理后台\n（审核 / 统计 / 日志）] as AdminConsole
+}
+
+package "应用服务层" #EEF4FF {
+  [用户与权限服务] as AuthSvc
+  [活动管理服务] as ActivitySvc
+  [报名与候补服务] as RegSvc
+  [核销服务] as CheckInSvc
+  [查询统计服务] as StatsSvc
+  [通知服务] as NotifySvc
+  [日志审计服务] as AuditSvc
+}
+
+package "领域层" #F0FFF4 {
+  [领域模型\n活动 / 场次 / 票种 / 报名 / 候补] as Domain
+  [状态机\n活动 · 场次 · 报名记录] as StateMachine
+}
+
+package "基础设施层" #FFFBEA {
+  database "MySQL\n业务数据库" as DB
+  [邮件网关] as Mail
+  [定时任务调度] as Scheduler
+  [文件存储\n（导出文件）] as Storage
+}
+
+' ---- 表现层到应用服务 ----
+Portal --> AuthSvc
+Portal --> RegSvc
+Portal --> StatsSvc
+OrgConsole --> ActivitySvc
+OrgConsole --> StatsSvc
+VerifyConsole --> CheckInSvc
+AdminConsole --> ActivitySvc
+AdminConsole --> AuthSvc
+AdminConsole --> AuditSvc
+
+' ---- 应用服务之间 ----
+RegSvc --> NotifySvc
+CheckInSvc --> RegSvc
+ActivitySvc --> NotifySvc
+RegSvc --> AuditSvc
+ActivitySvc --> AuditSvc
+CheckInSvc --> AuditSvc
+StatsSvc --> Storage
+
+' ---- 应用服务到领域层 ----
+AuthSvc --> Domain
+ActivitySvc --> Domain
+RegSvc --> Domain
+CheckInSvc --> Domain
+StatsSvc --> Domain
+Domain --> StateMachine
+
+' ---- 基础设施 ----
+Domain --> DB
+AuditSvc --> DB
+NotifySvc --> Mail
+Scheduler --> RegSvc
+Scheduler --> ActivitySvc
+
+@enduml

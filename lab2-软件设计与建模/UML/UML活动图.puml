@@ -1,0 +1,60 @@
+@startuml UML活动图
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 150
+skinparam shadowing false
+skinparam ArrowColor #4A5568
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityBorderColor #2F6BFF
+skinparam ActivityDiamondBackgroundColor #FFF8E1
+skinparam ActivityDiamondBorderColor #2F6BFF
+skinparam ActivityFontSize 12
+skinparam PartitionBorderColor #CBD5E0
+skinparam PartitionBackgroundColor #F7F9FC
+
+|参与者|
+start
+:选择活动、场次与票种;
+:填写报名信息;
+:提交报名;
+
+|系统|
+:校验场次状态与报名截止时间;
+if (是否为重复请求？) then (是)
+  :返回首次报名结果;
+  stop
+endif
+
+if (名额是否已满？) then (否)
+  :创建报名记录（已确认）;
+  :扣减票种剩余名额;
+  :生成签到二维码;
+  :发送报名成功通知;
+  |参与者|
+  :收到通知，报名完成;
+  stop
+else (是)
+  :提示名额已满;
+  |参与者|
+  :选择加入候补;
+  |系统|
+  :分配排队号并进入候补队列;
+  :等待名额释放;
+  if (是否有报名被取消？) then (是)
+    :释放名额并通知候补第一位;
+    if (是否 1 小时内确认？) then (是)
+      :转为已确认报名;
+      :生成签到二维码;
+      :发送报名成功通知;
+      stop
+    else (否)
+      :作废该递补资格;
+      :顺延至下一位，原候补者排到队尾;
+      stop
+    endif
+  else (否)
+    :场次报名截止后候补失效;
+    stop
+  endif
+endif
+
+@enduml

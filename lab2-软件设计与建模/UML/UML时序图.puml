@@ -1,0 +1,73 @@
+@startuml UML时序图
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 150
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ArrowColor #4A5568
+skinparam participant {
+  BackgroundColor #FFFFFF
+  BorderColor #2F6BFF
+  FontSize 12
+}
+skinparam sequence {
+  LifeLineBorderColor #CBD5E0
+  LifeLineBackgroundColor #F7F9FC
+}
+autonumber
+
+participant "参与者A" as A
+participant "参与者B" as B
+participant "报名服务" as R
+participant "候补服务" as W
+participant "数据库" as DB
+participant "通知服务" as N
+
+== 并发争抢最后一个名额 ==
+A -> R : 提交报名（requestNo = RA001）
+B -> R : 同时提交报名（requestNo = RB001）
+
+R -> DB : BEGIN
+R -> DB : SELECT 场次与票种 FOR UPDATE
+DB --> R : 剩余名额 = 1
+R -> DB : 校验重复请求与有效报名
+DB --> R : 无重复记录
+R -> DB : INSERT 报名记录，状态 = 已确认
+R -> DB : UPDATE 票种剩余名额 = 0
+R -> DB : COMMIT
+R --> A : 201 报名成功，返回签到二维码
+
+R -> DB : BEGIN
+R -> DB : SELECT 场次与票种 FOR UPDATE
+DB --> R : 剩余名额 = 0
+R -> DB : ROLLBACK
+R --> B : 409 名额已满，可选择候补
+
+== 加入候补 ==
+B -> W : 加入候补队列
+W -> DB : INSERT 候补记录（queueNo = 1）
+W --> B : 返回候补排位
+
+== 取消报名触发自动递补 ==
+A -> R : 取消报名
+R -> DB : UPDATE 报名状态 = 已取消
+R -> DB : 释放名额
+R -> W : onQuotaReleased(sessionId)
+
+W -> DB : SELECT 队首候补（按 queueNo）
+DB --> W : 命中 B
+W -> N : 发送递补通知，确认截止 = 当前时间 + 1 小时
+N --> B : 站内消息 / 邮件
+
+alt 1 小时内确认
+  B -> W : 确认递补
+  W -> DB : UPDATE 候补状态 = 已确认
+  W -> DB : INSERT 报名记录，状态 = 已确认
+  W -> N : 发送报名成功通知
+  N --> B : 站内消息 / 邮件
+else 超时未确认
+  W -> DB : UPDATE 候补状态 = 已失效
+  W -> DB : 顺延至下一位候补
+  W -> W : 原候补者重新排队时排到队尾
+end
+
+@enduml

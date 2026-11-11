@@ -1,0 +1,41 @@
+@startuml UML状态图
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 150
+skinparam shadowing false
+skinparam ArrowColor #4A5568
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #2F6BFF
+  FontSize 13
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #D6B656
+}
+
+title 报名记录状态机
+
+[*] --> 已确认 : 报名成功（有名额）
+[*] --> 候补中 : 名额已满，加入候补
+
+候补中 --> 已确认 : 收到递补通知后\n1 小时内确认
+候补中 --> 已失效 : 超时未确认 / 活动取消
+
+已确认 --> 已核销 : 现场扫码核销成功\n（重复扫码仅提示首次核销时间，不改状态）
+已确认 --> 已取消 : 场次开始前用户取消
+已确认 --> 缺席 : 场次结束仍未核销
+已确认 --> 已失效 : 活动被取消
+
+已取消 --> [*]
+已核销 --> [*]
+缺席 --> [*]
+已失效 --> [*]
+
+note bottom of 已失效
+  禁止的转换：
+  已核销 / 已取消 / 缺席 / 已失效
+  均不得回到任何其他状态；
+  已确认不得直接转为候补中
+end note
+
+@enduml

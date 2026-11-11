@@ -1,0 +1,86 @@
+@startuml UML用例图
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 150
+skinparam shadowing false
+skinparam ArrowColor #4A5568
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2F6BFF
+  FontSize 13
+}
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #2F6BFF
+  FontSize 12
+}
+left to right direction
+
+actor 参与者 as P
+actor 组织者 as O
+actor 平台管理员 as A
+actor 检票人员 as V
+actor 系统调度 as S
+
+rectangle "活动票务与报名系统" {
+  usecase "注册 / 登录" as UC1
+  usecase "查询活动" as UC9
+  usecase "报名" as UC10
+  usecase "取消报名" as UC11
+  usecase "加入候补" as UC12
+  usecase "确认递补" as UC13
+  usecase "接收通知" as UC19
+
+  usecase "创建活动" as UC4
+  usecase "管理场次与票种" as UC5
+  usecase "提交审核" as UC6
+  usecase "邀请检票人员" as UC3
+  usecase "查看报名名单" as UC16
+  usecase "导出名单" as UC17
+  usecase "查看统计" as UC18
+
+  usecase "开通机构账号" as UC2
+  usecase "审核活动" as UC7
+  usecase "取消活动" as UC8
+  usecase "查询操作日志" as UC20
+
+  usecase "扫码核销" as UC14
+  usecase "查看本场名单" as UC15
+
+  usecase "场次状态自动流转" as UC21
+  usecase "递补超时与缺席标记" as UC22
+}
+
+P --> UC1
+P --> UC9
+P --> UC10
+P --> UC11
+P --> UC12
+P --> UC13
+P --> UC19
+
+O --> UC4
+O --> UC5
+O --> UC6
+O --> UC3
+O --> UC16
+O --> UC17
+O --> UC18
+
+A --> UC2
+A --> UC7
+A --> UC8
+A --> UC20
+
+V --> UC14
+V --> UC15
+
+S --> UC21
+S --> UC22
+
+UC10 ..> UC9 : <<include>> 校验名额
+UC12 ..> UC10 : <<extend>>
+UC13 ..> UC10 : <<include>> 生成记录
+UC8 ..> UC19 : <<include>>
+UC7 ..> UC19 : <<include>>
+
+@enduml
