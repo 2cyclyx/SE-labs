@@ -22,6 +22,7 @@ start
 if (是否为重复请求？) then (是)
   :返回首次报名结果;
   stop
+else (否)
 endif
 
 if (名额是否已满？) then (否)

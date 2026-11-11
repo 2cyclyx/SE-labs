@@ -29,8 +29,9 @@ B -> R : 同时提交报名（requestNo = RB001）
 R -> DB : BEGIN
 R -> DB : SELECT 场次与票种 FOR UPDATE
 DB --> R : 剩余名额 = 1
-R -> DB : 校验重复请求与有效报名
-DB --> R : 无重复记录
+note over R : 幂等校验：同一 requestNo 重复提交返回首次结果\n同一用户在本场次仅允许一条有效报名\n取消报名后 24 小时内禁止再次报名同一场次
+R -> DB : 校验幂等号、有效报名与 24 小时冷却
+DB --> R : 校验通过
 R -> DB : INSERT 报名记录，状态 = 已确认
 R -> DB : UPDATE 票种剩余名额 = 0
 R -> DB : COMMIT
